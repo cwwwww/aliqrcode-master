@@ -15,7 +15,7 @@ import com.zhoup.android.aliqrcode.utils.LogUtil;
  */
 public class AlipayQRTask {
 
-    private static final long SLEEP_TIME = 1000L;
+    private static final long SLEEP_TIME = 200L;
     long amount = 0;
 
     /**
@@ -49,7 +49,7 @@ public class AlipayQRTask {
     public void clickTargetView(ExpandAccessibilityNodeInfo target) {
         AccessibilityNodeInfo accessibilityNodeInfo = target.getAccessibilityNodeInfo();
         if (accessibilityNodeInfo != null) {
-//            LogUtil.i("点击了“" + target.getId() + "”按钮...");
+            LogUtil.i("点击了“" + target.getId() + "”按钮...");
             // 模拟点击
             AccessibilityServiceHelper.performClick(accessibilityNodeInfo);
             sleep(SLEEP_TIME);

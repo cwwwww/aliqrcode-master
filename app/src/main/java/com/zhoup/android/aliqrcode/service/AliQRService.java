@@ -2,6 +2,7 @@ package com.zhoup.android.aliqrcode.service;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -9,12 +10,13 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -22,8 +24,6 @@ import android.widget.Toast;
 
 import com.lzy.okgo.OkGo;
 import com.lzy.okgo.callback.AbsCallback;
-import com.lzy.okgo.callback.Callback;
-import com.lzy.okgo.callback.StringCallback;
 import com.lzy.okgo.model.Response;
 import com.zhoup.android.aliqrcode.R;
 import com.zhoup.android.aliqrcode.activity.MainActivity;
@@ -34,6 +34,7 @@ import com.zhoup.android.aliqrcode.module.model.bean.ExpandAccessibilityNodeInfo
 import com.zhoup.android.aliqrcode.module.model.bean.QRCodeBean;
 import com.zhoup.android.aliqrcode.task.AlipayQRTask;
 import com.zhoup.android.aliqrcode.utils.AccessibilityServiceHelper;
+import com.zhoup.android.aliqrcode.utils.ImageCut;
 import com.zhoup.android.aliqrcode.utils.LogUtil;
 import com.zhoup.android.aliqrcode.utils.NotificationUtils;
 import com.zhoup.android.aliqrcode.utils.ToastUtil;
@@ -46,8 +47,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
 import java.util.Iterator;
 import java.util.List;
@@ -134,11 +135,13 @@ public class AliQRService extends AccessibilityService {
                     break;
                 case AppConst.SAVE_PICTURE: // 保存图片
                     if (skip) {
+                        //点击保存图片按钮
                         mTask.clickTargetView(target);
-                        Log.e("cwww", "点击保存图片按钮：" + System.currentTimeMillis());
+//                        Log.e("cwww", "点击保存图片按钮：" + System.currentTimeMillis());
                         //在这里上传图片 首先要获得图片数据 其次上传
                         //上传图片到服务器
                         postImage();
+//                        postImage2();
                         count = count + 1;
                         mTask.goGlobalBack(this);
                         skip = false;
@@ -154,6 +157,10 @@ public class AliQRService extends AccessibilityService {
                     break;
             }
         }
+    }
+
+    private void postImage2() {
+//        Bitmap bitmap = takeScreenShot();
     }
 
     /**
@@ -229,14 +236,19 @@ public class AliQRService extends AccessibilityService {
                     //获得图片base64编码
                     Bitmap bitmap = stringToBitmap(photoPath);
                     if (bitmap != null) {
-                        String base64 = bitmaptoString(bitmap);
-                        Log.e("cwww", "base64编码:" + base64 + "；mid:" + mid + "；memo:" + resaon + "；amount:" + amount);
-                        OkGo.<String>post("http://api.hqgaotong.com/api/upload/partner/10000")
+                        Bitmap ic = ImageCut.zoomBitmap(bitmap, 720, 1092);
+//                        ImageCut.saveBitmap(ic, String.valueOf(System.currentTimeMillis()), getBaseContext());
+                        long amountCount = amount.longValue() + count * interval;
+                        String base64 = bitmaptoString(ic);
+//                        Log.e("cwww", "base64编码:" + base64 + "；mid:" + mid + "；memo:" + resaon + "；amount:" + amount);
+                        Log.e("cwww", "；mid:" + mid + "；memo:" + resaon + "；amount:" + amountCount);
+                        //"http://api.hqgaotong.com/api/upload/partner/10000"
+                        OkGo.<String>post(postUrl)
                                 .tag(this)
                                 .params("image", base64)
                                 .params("mid", mid)
                                 .params("memo", resaon)
-                                .params("amount", String.valueOf(amount))
+                                .params("amount", String.valueOf(amountCount))
                                 .execute(new AbsCallback<String>() {
                                     @Override
                                     public String convertResponse(okhttp3.Response response) throws Throwable {
@@ -412,4 +424,51 @@ public class AliQRService extends AccessibilityService {
         return null;
     }
 
+    // 获取指定Activity的截屏，保存到png文件
+    public static Bitmap takeScreenShot(Activity activity) {
+        // View是你需要截图的View
+        View view = activity.getWindow().getDecorView();
+        view.setDrawingCacheEnabled(true);
+        view.buildDrawingCache();
+        Bitmap b1 = view.getDrawingCache();
+
+        // 获取状态栏高度
+        Rect frame = new Rect();
+        activity.getWindow().getDecorView().getWindowVisibleDisplayFrame(frame);
+        int statusBarHeight = frame.top;
+        System.out.println(statusBarHeight);
+
+        // 获取屏幕长和高
+        int width = activity.getWindowManager().getDefaultDisplay().getWidth();
+        int height = activity.getWindowManager().getDefaultDisplay()
+                .getHeight();
+        // 去掉标题栏
+        // Bitmap b = Bitmap.createBitmap(b1, 0, 25, 320, 455);
+        Bitmap b = Bitmap.createBitmap(b1, 0, statusBarHeight, width, height
+                - statusBarHeight);
+        view.destroyDrawingCache();
+        return b;
+    }
+
+//    // 程序入口 截取当前屏幕
+//    public static void shootLoacleView(Activity a, String picpath) {
+//        ScreenShot.savePic(ScreenShot.takeScreenShot(a), picpath);
+//    }
+
+    // 保存到sdcard
+    public static void savePic(Bitmap b, String strFileName) {
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(strFileName);
+            if (null != fos) {
+                b.compress(Bitmap.CompressFormat.PNG, 90, fos);
+                fos.flush();
+                fos.close();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
