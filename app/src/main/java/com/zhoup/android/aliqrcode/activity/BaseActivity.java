@@ -1,11 +1,9 @@
 package com.zhoup.android.aliqrcode.activity;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 import com.zhoup.android.aliqrcode.application.MyApplication;
-
-import org.greenrobot.eventbus.EventBus;
 
 import butterknife.ButterKnife;
 

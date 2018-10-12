@@ -8,7 +8,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Log;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,7 +19,7 @@ public class ImageCut {
     /**
      * 按宽/高缩放图片到指定大小并进行裁剪得到中间部分图片 <br>
      * 方 法 名：zoomBitmap <br>
-     * 创 建 人：楼翔宇 <br>
+     * 创 建 人：cww <br>
      * 创建时间：2018-4-7 下午12:02:52 <br>
      * 修 改 人： <br>
      * 修改日期： <br>

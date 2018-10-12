@@ -10,7 +10,7 @@ public class AlipayAmountEvent {
     private int id;
     private String postUrl;
     private BigDecimal amount;
-    private String reason;
+//    private String reason;
     private long count;
     private long interval;
 
@@ -44,13 +44,13 @@ public class AlipayAmountEvent {
         this.amount = amount;
     }
 
-    public String getReason() {
-        return reason;
-    }
-
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+//    public String getReason() {
+//        return reason;
+//    }
+//
+//    public void setReason(String reason) {
+//        this.reason = reason;
+//    }
 
     public long getCount() {
         return count;

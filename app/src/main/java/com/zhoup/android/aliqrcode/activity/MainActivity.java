@@ -7,8 +7,6 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.support.design.widget.TextInputEditText;
-import android.support.v4.math.MathUtils;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -35,8 +33,8 @@ public class MainActivity extends BaseActivity implements IMainView {
     Button mServiceButton;
     @BindView(R.id.edit_amount_begin)
     TextInputEditText mAmountBeginEditText;
-    @BindView(R.id.edit_reason)
-    TextInputEditText mReasonEditText;
+//    @BindView(R.id.edit_reason)
+//    TextInputEditText mReasonEditText;
     @BindView(R.id.edit_amount_end)
     TextInputEditText mAmountEndEditText;
     @BindView(R.id.edit_amount_interval)
@@ -86,13 +84,13 @@ public class MainActivity extends BaseActivity implements IMainView {
                     id = Integer.valueOf(mId.getText().toString().trim());
                 }
 
-                //开始金额
-                String reason = mReasonEditText.getText().toString().trim();
-                if (reason.isEmpty() || "".equals(reason)) {
-                    alipayAmountEvent.setReason("收钱");
-                } else {
-                    alipayAmountEvent.setReason(reason);
-                }
+                //收款理由
+//                String reason = mReasonEditText.getText().toString().trim();
+//                if (reason.isEmpty() || "".equals(reason)) {
+//                    alipayAmountEvent.setReason("收钱");
+//                } else {
+//                    alipayAmountEvent.setReason(reason);
+//                }
                 //金额填写处理
                 if (mAmountBeginEditText.getText().toString().isEmpty() || mAmountEndEditText.getText().toString().isEmpty()) {
                     Toast.makeText(this, "请填入正确的信息!", Toast.LENGTH_SHORT).show();
@@ -112,6 +110,7 @@ public class MainActivity extends BaseActivity implements IMainView {
                     Toast.makeText(this, "请填入正确的信息!", Toast.LENGTH_SHORT).show();
                     return;
                 }
+//                Log.e("cww", "postUrl：" + postUrl + "；reason：" + reason);
                 long count = (long) Math.ceil((e - b) / i);
                 alipayAmountEvent.setPostUrl(postUrl);
                 alipayAmountEvent.setId(id);

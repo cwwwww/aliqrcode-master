@@ -83,7 +83,7 @@ public class AliQRService extends AccessibilityService {
     //mid
     private int mid = 0;
     //理由
-    private String resaon;
+//    private String resaon;
     //起始金额
     private BigDecimal amount;
     //上传地址
@@ -131,7 +131,9 @@ public class AliQRService extends AccessibilityService {
                     break;
                 case AppConst.REASON_RELATIVELAYOUT_ID:
                     // 模拟输入收款理由
-                    mTask.inputQRCodeInfo(AliQRService.this, mCodeBean, target, getRootInActiveWindow(), interval * count);
+                    if (mCodeBean != null) {
+                        mTask.inputQRCodeInfo(AliQRService.this, mCodeBean, target, getRootInActiveWindow(), interval * count);
+                    }
                     break;
                 case AppConst.SAVE_PICTURE: // 保存图片
                     if (skip) {
@@ -230,7 +232,7 @@ public class AliQRService extends AccessibilityService {
             String photoTitle = c.getString(c.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));
             if (photoPath != null && photoPath.length() > 0) {
                 final File file = new File(photoPath);
-                Log.e("cwww", "照片日期：" + photoDate + "；照片标题：" + photoTitle);
+//                Log.e("cwww", "照片日期：" + photoDate + "；照片标题：" + photoTitle);
                 if (isNumericJPG(photoTitle)) {
                     //开始上传后台
                     //获得图片base64编码
@@ -241,13 +243,13 @@ public class AliQRService extends AccessibilityService {
                         long amountCount = amount.longValue() + count * interval;
                         String base64 = bitmaptoString(ic);
 //                        Log.e("cwww", "base64编码:" + base64 + "；mid:" + mid + "；memo:" + resaon + "；amount:" + amount);
-                        Log.e("cwww", "；mid:" + mid + "；memo:" + resaon + "；amount:" + amountCount);
+//                        Log.e("cwww", "postUrl：" + postUrl + "；mid:" + mid + "；memo:" + System.currentTimeMillis() + "；amount:" + amountCount);
                         //"http://api.hqgaotong.com/api/upload/partner/10000"
                         OkGo.<String>post(postUrl)
                                 .tag(this)
                                 .params("image", base64)
                                 .params("mid", mid)
-                                .params("memo", resaon)
+                                .params("memo", String.valueOf(System.currentTimeMillis()))
                                 .params("amount", String.valueOf(amountCount))
                                 .execute(new AbsCallback<String>() {
                                     @Override
@@ -363,15 +365,16 @@ public class AliQRService extends AccessibilityService {
             BigDecimal alipayAmount = event.getAmount();
             QRCodeBean qrCodeBean = new QRCodeBean();
             qrCodeBean.setAmount(alipayAmount.longValue());
-            //理由
-            qrCodeBean.setAssociatedCode(event.getReason());
+//            //理由
+//            qrCodeBean.setAssociatedCode(event.getReason());
             //数量
             total = event.getCount();
             interval = event.getInterval();
             mid = event.getId();
-            resaon = event.getReason();
+//            resaon = event.getReason();
             amount = event.getAmount();
             postUrl = event.getPostUrl();
+//            Log.e("cww", "service:" + postUrl + ":  reason:" + resaon);
             gotoAlipay(qrCodeBean);
         }
     }
