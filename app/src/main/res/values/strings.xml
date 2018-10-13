@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">自动生成支付宝收款码工具V1.5</string>
+    <string name="app_name">自动生成支付宝收款码工具V1.51</string>
     <string name="start_additional_function">开启辅助功能</string>
     <string name="use_tip">用户须知</string>
     <string name="open_additional_function_service">本软件需要开启辅助功能才能使用</string>

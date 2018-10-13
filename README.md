@@ -4,12 +4,12 @@
 # 技术详述
 Android里有一个叫`AccessibilityService`的服务，可以模拟点击输入等事件。
 
-# 效果预览
-![](https://github.com/jtrixs/aliqrcode/blob/master/screen_recrod/1.gif)
+<!-- # 效果预览 -->
+<!-- ![](https://github.com/jtrixs/aliqrcode/blob/master/screen_recrod/1.gif) -->
 
-![](https://github.com/jtrixs/aliqrcode/blob/master/screen_recrod/2.gif)
+<!-- ![](https://github.com/jtrixs/aliqrcode/blob/master/screen_recrod/2.gif) -->
 
-![](https://github.com/jtrixs/aliqrcode/blob/master/screen_recrod/3.gif)
+<!-- ![](https://github.com/jtrixs/aliqrcode/blob/master/screen_recrod/3.gif) -->
 
 # 使用说明
 本软件仅供学习使用，完全模拟人工操作批量生成支付宝收款码。
