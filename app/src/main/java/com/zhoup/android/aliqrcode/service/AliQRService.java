@@ -2,6 +2,7 @@ package com.zhoup.android.aliqrcode.service;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -12,6 +13,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Message;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -50,8 +53,11 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -88,6 +94,8 @@ public class AliQRService extends AccessibilityService {
     private BigDecimal amount;
     //上传地址
     private String postUrl;
+    //处理重复提交
+    private Map<String, String> tagMap;
 
     @Override
     public void onCreate() {
@@ -226,53 +234,77 @@ public class AliQRService extends AccessibilityService {
         Cursor c = this.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null,
                 selection, null, null);
 
+        //遍历相册
         while (c.moveToNext()) {
+            //根据时间来判断是否提交同一图片
+            long photoDate = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN));
             //照片路径
             String photoPath = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));
-            //照片日期
-            long photoDate = c.getLong(c.getColumnIndexOrThrow(MediaStore.Images.Media.DATE_TAKEN));
             //照片标题
             String photoTitle = c.getString(c.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME));
-            if (photoPath != null && photoPath.length() > 0) {
-                final File file = new File(photoPath);
-//                Log.e("cwww", "照片日期：" + photoDate + "；照片标题：" + photoTitle);
-                if (isNumericJPG(photoTitle)) {
-                    //开始上传后台
-                    //获得图片base64编码
-                    Bitmap bitmap = stringToBitmap(photoPath);
-                    if (bitmap != null) {
-                        Bitmap ic = ImageCut.zoomBitmap(bitmap, 720, 1092);
-//                        ImageCut.saveBitmap(ic, String.valueOf(System.currentTimeMillis()), getBaseContext());
-                        long amountCount = amount.longValue() + count * interval;
-                        String base64 = bitmaptoString(ic);
-//                        Log.e("cwww",  "mid:" + mid + "；memo:" + resaon + "；amount:" + amountCount);
-//                        Log.e("cwww", "postUrl：" + postUrl + "；mid:" + mid + "；memo:" + System.currentTimeMillis() + "；amount:" + amountCount);
-                        //"http://api.hqgaotong.com/api/upload/partner/10000"
-                        OkGo.<String>post(postUrl)
-                                .tag(this)
-                                .params("image", base64)
-                                .params("mid", mid)
-                                .params("memo", resaon)
-                                .params("amount", String.valueOf(amountCount))
-                                .execute(new AbsCallback<String>() {
-                                    @Override
-                                    public String convertResponse(okhttp3.Response response) throws Throwable {
-                                        return response.body().string();
-                                    }
-
-                                    @Override
-                                    public void onSuccess(Response<String> response) {
-                                        Log.e("cww", "返回的数据：" + response.body().toString());
-                                        //删除图片
-                                        deletePictures(getApplicationContext(), file);
-                                    }
-                                });
+            if (tagMap.size() == 0) {
+                tagMap.put(String.valueOf(photoDate), photoPath);
+                handleImg(photoPath, photoTitle, photoDate);
+            } else {
+                for (String str : tagMap.keySet()) {
+                    String value = tagMap.get(str);
+                    if (!value.equals(photoPath)) {
+                        tagMap.put(String.valueOf(photoDate), photoPath);
+                        handleImg(photoPath, photoTitle, photoDate);
+                        break;
                     }
-                } else {
-                    //删除掉名称不是数字的图片
-                    deletePictures(getApplicationContext(), file);
-
                 }
+            }
+        }
+    }
+
+    private void handleImg(String photoPath, String photoTitle, final long photoDate) {
+        if (photoPath != null && photoPath.length() > 0) {
+            final File file = new File(photoPath);
+            if (isNumericJPG(photoTitle)) {
+                //开始上传后台
+                //获得图片base64编码
+                Bitmap bitmap = stringToBitmap(photoPath);
+                if (bitmap != null) {
+                    Bitmap ic = ImageCut.zoomBitmap(bitmap, 720, 1092);
+//                        ImageCut.saveBitmap(ic, String.valueOf(System.currentTimeMillis()), getBaseContext());
+                    long amountCount = amount.longValue() + count * interval;
+                    String base64 = bitmaptoString(ic);
+                    Log.e("cwww", "mid:" + mid + "；memo:" + resaon + "；amount:" + amountCount);
+//                        Log.e("cwww", "postUrl：" + postUrl + "；mid:" + mid + "；memo:" + System.currentTimeMillis() + "；amount:" + amountCount);
+                    //"http://api.hqgaotong.com/api/upload/partner/10000"
+                    OkGo.<String>post(postUrl)
+                            .tag(this)
+                            .params("image", base64)
+                            .params("mid", mid)
+                            .params("memo", resaon)
+                            .params("amount", String.valueOf(amountCount))
+                            .execute(new AbsCallback<String>() {
+                                @Override
+                                public String convertResponse(okhttp3.Response response) throws Throwable {
+                                    return response.body().string();
+                                }
+
+                                @Override
+                                public void onSuccess(Response<String> response) {
+                                    Log.e("cww", "返回的数据：" + response.body().toString());
+                                    //删除图片
+                                    deletePictures(getApplicationContext(), file);
+                                    //更新map集合
+                                    tagMap.remove(String.valueOf(photoDate));
+                                }
+
+                                @Override
+                                public void onError(Response<String> response) {
+                                    super.onError(response);
+                                    Log.e("cww", "出错：" + response.body().toString());
+                                    tagMap.remove(String.valueOf(photoDate));
+                                }
+                            });
+                }
+            } else {
+                //删除掉名称不是数字的图片
+                deletePictures(getApplicationContext(), file);
             }
         }
     }
@@ -315,6 +347,8 @@ public class AliQRService extends AccessibilityService {
 
     //打开支付宝app
     private void gotoAlipay(QRCodeBean mQRCodeBean) {
+        //初始化标记集合
+        tagMap = new HashMap<>();
         //重新设置quit和count的值
         quit = false;
         count = 0;
