@@ -96,6 +96,10 @@ public class AliQRService extends AccessibilityService {
     private String postUrl;
     //处理重复提交
     private Map<String, String> tagMap;
+    //多加一步判断，图片
+    private Map<String, String> tagMap2;
+    //再加一个数字集合判断
+    private List<Long> tagList;
 
     @Override
     public void onCreate() {
@@ -154,7 +158,6 @@ public class AliQRService extends AccessibilityService {
                         //在这里上传图片 首先要获得图片数据 其次上传
                         //上传图片到服务器
                         postImage();
-//                        postImage2();
                         count = count + 1;
                         mTask.goGlobalBack(this);
                         skip = false;
@@ -170,10 +173,6 @@ public class AliQRService extends AccessibilityService {
                     break;
             }
         }
-    }
-
-    private void postImage2() {
-//        Bitmap bitmap = takeScreenShot();
     }
 
     /**
@@ -246,14 +245,19 @@ public class AliQRService extends AccessibilityService {
                 tagMap.put(String.valueOf(photoDate), photoPath);
                 handleImg(photoPath, photoTitle, photoDate);
             } else {
-                for (String str : tagMap.keySet()) {
-                    String value = tagMap.get(str);
-                    if (!value.equals(photoPath)) {
-                        tagMap.put(String.valueOf(photoDate), photoPath);
-                        handleImg(photoPath, photoTitle, photoDate);
-                        break;
-                    }
+                boolean contains = tagMap.containsValue(photoPath);
+                if (!contains) {
+                    tagMap.put(String.valueOf(photoDate), photoPath);
+                    handleImg(photoPath, photoTitle, photoDate);
                 }
+//                for (String str : tagMap.keySet()) {
+//                    String value = tagMap.get(str);
+//                    if (!value.equals(photoPath)) {
+//                        tagMap.put(String.valueOf(photoDate), photoPath);
+//                        handleImg(photoPath, photoTitle, photoDate);
+//                        break;
+//                    }
+//                }
             }
         }
     }
@@ -269,44 +273,74 @@ public class AliQRService extends AccessibilityService {
                     Bitmap ic = ImageCut.zoomBitmap(bitmap, 720, 1092);
 //                        ImageCut.saveBitmap(ic, String.valueOf(System.currentTimeMillis()), getBaseContext());
                     long amountCount = amount.longValue() + count * interval;
-                    String base64 = bitmaptoString(ic);
-                    Log.e("cwww", "mid:" + mid + "；memo:" + resaon + "；amount:" + amountCount);
-//                        Log.e("cwww", "postUrl：" + postUrl + "；mid:" + mid + "；memo:" + System.currentTimeMillis() + "；amount:" + amountCount);
-                    //"http://api.hqgaotong.com/api/upload/partner/10000"
-                    OkGo.<String>post(postUrl)
-                            .tag(this)
-                            .params("image", base64)
-                            .params("mid", mid)
-                            .params("memo", resaon)
-                            .params("amount", String.valueOf(amountCount))
-                            .execute(new AbsCallback<String>() {
-                                @Override
-                                public String convertResponse(okhttp3.Response response) throws Throwable {
-                                    return response.body().string();
-                                }
-
-                                @Override
-                                public void onSuccess(Response<String> response) {
-                                    Log.e("cww", "返回的数据：" + response.body().toString());
-                                    //删除图片
-                                    deletePictures(getApplicationContext(), file);
-                                    //更新map集合
-                                    tagMap.remove(String.valueOf(photoDate));
-                                }
-
-                                @Override
-                                public void onError(Response<String> response) {
-                                    super.onError(response);
-                                    Log.e("cww", "出错：" + response.body().toString());
-                                    tagMap.remove(String.valueOf(photoDate));
-                                }
-                            });
+                    if (tagList.size() == 0) {
+                        tagList.add(amountCount);
+                        handleCount(ic, photoPath, amountCount, file, photoDate);
+                    } else {
+                        boolean contains = tagList.contains(amountCount);
+                        if (!contains) {
+                            tagList.add(amountCount);
+                            handleCount(ic, photoPath, amountCount, file, photoDate);
+                        }
+                    }
                 }
             } else {
                 //删除掉名称不是数字的图片
                 deletePictures(getApplicationContext(), file);
             }
         }
+    }
+
+    private void handleCount(Bitmap ic, String photoPath, long amountCount, File file, long photoDate) {
+        String base64 = bitmaptoString(ic);
+        if (tagMap2.size() == 0) {
+            tagMap2.put(photoPath, base64);
+            pushImg(base64, amountCount, file, photoDate);
+        } else {
+            boolean contains = tagMap2.containsValue(base64);
+            if (!contains) {
+                tagMap2.put(photoPath, base64);
+                pushImg(base64, amountCount, file, photoDate);
+            }
+        }
+    }
+
+    private void pushImg(final String base64, final long amountCount, final File file, final long photoDate) {
+        //"http://api.hqgaotong.com/api/upload/partner/10000"
+        Log.e("cww", "提交的mid：" + mid + "；提交的reason：" + resaon + "；提交的金额：" + amountCount);
+        OkGo.<String>post(postUrl)
+                .tag(this)
+                .params("image", base64)
+                .params("mid", mid)
+                .params("memo", resaon)
+                .params("amount", String.valueOf(amountCount))
+                .execute(new AbsCallback<String>() {
+                    @Override
+                    public String convertResponse(okhttp3.Response response) throws Throwable {
+                        return response.body().string();
+                    }
+
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        Log.e("cww", "返回的数据：" + response.body().toString());
+                        //删除图片
+                        deletePictures(getApplicationContext(), file);
+                        //更新map集合
+                        tagMap.remove(String.valueOf(photoDate));
+                        tagMap2.remove(base64);
+                        tagList.remove(amountCount);
+                    }
+
+                    @Override
+                    public void onError(Response<String> response) {
+                        super.onError(response);
+//                                    Log.e("cww", "出错：" + response.body().toString());
+                        deletePictures(getApplicationContext(), file);
+                        tagMap.remove(String.valueOf(photoDate));
+                        tagMap2.remove(base64);
+                        tagList.remove(amountCount);
+                    }
+                });
     }
 
     @Override
@@ -349,6 +383,10 @@ public class AliQRService extends AccessibilityService {
     private void gotoAlipay(QRCodeBean mQRCodeBean) {
         //初始化标记集合
         tagMap = new HashMap<>();
+        //初始化标记2
+        tagMap2 = new HashMap<>();
+        //初始化标记3
+        tagList = new ArrayList<>();
         //重新设置quit和count的值
         quit = false;
         count = 0;

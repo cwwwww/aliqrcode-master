@@ -15,7 +15,7 @@ import com.zhoup.android.aliqrcode.utils.LogUtil;
  */
 public class AlipayQRTask {
 
-    private static final long SLEEP_TIME = 200L;
+    private static final long SLEEP_TIME = 300L;
     long amount = 0;
 
     /**
