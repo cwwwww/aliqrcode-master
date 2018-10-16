@@ -271,16 +271,19 @@ public class AliQRService extends AccessibilityService {
                 Bitmap bitmap = stringToBitmap(photoPath);
                 if (bitmap != null) {
                     Bitmap ic = ImageCut.zoomBitmap(bitmap, 720, 1092);
+                    String base64 = bitmaptoString(ic);
 //                        ImageCut.saveBitmap(ic, String.valueOf(System.currentTimeMillis()), getBaseContext());
                     long amountCount = amount.longValue() + count * interval;
                     if (tagList.size() == 0) {
                         tagList.add(amountCount);
-                        handleCount(ic, photoPath, amountCount, file, photoDate);
+                        pushImg(base64, amountCount, file, photoDate);
+//                        handleCount(ic, photoPath, amountCount, file, photoDate);
                     } else {
                         boolean contains = tagList.contains(amountCount);
                         if (!contains) {
                             tagList.add(amountCount);
-                            handleCount(ic, photoPath, amountCount, file, photoDate);
+                            pushImg(base64, amountCount, file, photoDate);
+//                            handleCount(ic, photoPath, amountCount, file, photoDate);
                         }
                     }
                 }
