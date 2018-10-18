@@ -2,7 +2,6 @@ package com.zhoup.android.aliqrcode.service;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -13,8 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.Message;
 import android.os.PowerManager;
 import android.provider.MediaStore;
 import android.util.Base64;
@@ -163,6 +160,8 @@ public class AliQRService extends AccessibilityService {
                         skip = false;
                         generate = false;
                         if (count >= total + 1) {
+                            //清除手机相册图片
+                            deleteAllImg();
                             quit = true;
                             mTask.goGlobalBack(this);
                             this.stopSelf();
@@ -172,6 +171,19 @@ public class AliQRService extends AccessibilityService {
                 default:
                     break;
             }
+        }
+    }
+
+    private void deleteAllImg() {
+        //selection: 指定查询条件
+        String selection = MediaStore.Images.Media.DATA + " like '%Camera%'";
+        Cursor c = this.getContentResolver().query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null,
+                selection, null, null);
+        while (c.moveToNext()) {
+            //照片路径
+            String photoPath = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));
+            final File file = new File(photoPath);
+            deletePictures(getApplicationContext(), file);
         }
     }
 
