@@ -86,7 +86,7 @@ public class AliQRService extends AccessibilityService {
     //mid
     private int mid = 0;
     //理由
-    private long resaon;
+    private long reason;
     //起始金额
     private BigDecimal amount;
     //上传地址
@@ -142,8 +142,8 @@ public class AliQRService extends AccessibilityService {
                     // 模拟输入收款理由
                     if (mCodeBean != null) {
                         //设置收款理由的值
-                        resaon = System.currentTimeMillis();
-                        mCodeBean.setAssociatedCode(String.valueOf(resaon));
+                        reason = System.currentTimeMillis();
+                        mCodeBean.setAssociatedCode(String.valueOf(reason));
                         mTask.inputQRCodeInfo(AliQRService.this, mCodeBean, target, getRootInActiveWindow(), interval * count);
                     }
                     break;
@@ -161,7 +161,7 @@ public class AliQRService extends AccessibilityService {
                         generate = false;
                         if (count >= total + 1) {
                             //清除手机相册图片
-                            deleteAllImg();
+//                            deleteAllImg();
                             quit = true;
                             mTask.goGlobalBack(this);
                             this.stopSelf();
@@ -182,7 +182,7 @@ public class AliQRService extends AccessibilityService {
         while (c.moveToNext()) {
             //照片路径
             String photoPath = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));
-            final File file = new File(photoPath);
+            File file = new File(photoPath);
             deletePictures(getApplicationContext(), file);
         }
     }
@@ -227,7 +227,6 @@ public class AliQRService extends AccessibilityService {
         target = AccessibilityServiceHelper.findNodeInfosById(nodeInfo, AppConst.SAVE_PICTURE);
         if (target != null) {
             //判断图片是否保存成功
-//            Log.e("cwwww", "保存图片成功" + System.currentTimeMillis());
             generate = false;
             return target;
         }
@@ -262,21 +261,13 @@ public class AliQRService extends AccessibilityService {
                     tagMap.put(String.valueOf(photoDate), photoPath);
                     handleImg(photoPath, photoTitle, photoDate);
                 }
-//                for (String str : tagMap.keySet()) {
-//                    String value = tagMap.get(str);
-//                    if (!value.equals(photoPath)) {
-//                        tagMap.put(String.valueOf(photoDate), photoPath);
-//                        handleImg(photoPath, photoTitle, photoDate);
-//                        break;
-//                    }
-//                }
             }
         }
     }
 
     private void handleImg(String photoPath, String photoTitle, final long photoDate) {
         if (photoPath != null && photoPath.length() > 0) {
-            final File file = new File(photoPath);
+            File file = new File(photoPath);
             if (isNumericJPG(photoTitle)) {
                 //开始上传后台
                 //获得图片base64编码
@@ -284,6 +275,7 @@ public class AliQRService extends AccessibilityService {
                 if (bitmap != null) {
                     Bitmap ic = ImageCut.zoomBitmap(bitmap, 720, 1092);
                     String base64 = bitmaptoString(ic);
+                    deletePictures(getApplicationContext(), file);
 //                        ImageCut.saveBitmap(ic, String.valueOf(System.currentTimeMillis()), getBaseContext());
                     long amountCount = amount.longValue() + count * interval;
                     if (tagList.size() == 0) {
@@ -322,12 +314,12 @@ public class AliQRService extends AccessibilityService {
 
     private void pushImg(final String base64, final long amountCount, final File file, final long photoDate) {
         //"http://api.hqgaotong.com/api/upload/partner/10000"
-        Log.e("cww", "提交的mid：" + mid + "；提交的reason：" + resaon + "；提交的金额：" + amountCount);
+        Log.e("cww", "提交的mid：" + mid + "；提交的reason：" + reason + "；提交的金额：" + amountCount);
         OkGo.<String>post(postUrl)
                 .tag(this)
                 .params("image", base64)
                 .params("mid", mid)
-                .params("memo", resaon)
+                .params("memo", reason)
                 .params("amount", String.valueOf(amountCount))
                 .execute(new AbsCallback<String>() {
                     @Override
@@ -338,8 +330,6 @@ public class AliQRService extends AccessibilityService {
                     @Override
                     public void onSuccess(Response<String> response) {
                         Log.e("cww", "返回的数据：" + response.body().toString());
-                        //删除图片
-                        deletePictures(getApplicationContext(), file);
                         //更新map集合
                         tagMap.remove(String.valueOf(photoDate));
                         tagMap2.remove(base64);
@@ -349,8 +339,6 @@ public class AliQRService extends AccessibilityService {
                     @Override
                     public void onError(Response<String> response) {
                         super.onError(response);
-//                                    Log.e("cww", "出错：" + response.body().toString());
-                        deletePictures(getApplicationContext(), file);
                         tagMap.remove(String.valueOf(photoDate));
                         tagMap2.remove(base64);
                         tagList.remove(amountCount);
@@ -456,7 +444,7 @@ public class AliQRService extends AccessibilityService {
             total = event.getCount();
             interval = event.getInterval();
             mid = event.getId();
-//            resaon = System.currentTimeMillis();
+//            reason = System.currentTimeMillis();
             amount = event.getAmount();
             postUrl = event.getPostUrl();
 
@@ -464,7 +452,7 @@ public class AliQRService extends AccessibilityService {
             QRCodeBean qrCodeBean = new QRCodeBean();
             qrCodeBean.setAmount(alipayAmount.longValue());
 //            //理由
-//            qrCodeBean.setAssociatedCode(String.valueOf(resaon));
+//            qrCodeBean.setAssociatedCode(String.valueOf(reason));
             gotoAlipay(qrCodeBean);
         }
     }
@@ -493,6 +481,7 @@ public class AliQRService extends AccessibilityService {
         context.sendBroadcast(intent);
         file.delete();
     }
+
 
     //将图片转化成base64编码
     public String bitmaptoString(Bitmap bitmap) {

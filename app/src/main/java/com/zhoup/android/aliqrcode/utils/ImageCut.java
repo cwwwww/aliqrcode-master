@@ -1,5 +1,7 @@
 package com.zhoup.android.aliqrcode.utils;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,6 +10,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.view.View;
+
+import com.zhoup.android.aliqrcode.application.MyApplication;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -54,11 +59,6 @@ public class ImageCut {
             if (width - x > 0 && height - y > 0 && bitmap != null)//获得新的图片 （原图，x轴起始位置，y轴起始位置，x轴结束位置，Y轴结束位置，缩放矩阵，是否过滤原图）为防止报错取绝对值
 //                newbmp = Bitmap.createBitmap(bitmap, (int) Math.abs(x), (int) Math.abs(y), (int) Math.abs(width - x),
 //                        (int) Math.abs(height - y), matrix, false);// createBitmap()方法中定义的参数x+width要小于或等于bitmap.getWidth()，y+height要小于或等于bitmap.getHeight()
-
-//                bx = ((130 / 720) * 720);
-//            by = ((355 / 1092) * height);
-//            bw = ((460 / 720) * width);
-//            bh = ((460 / 1092) * height);
 //            Log.e("cww", "剪切图：" +bx+ " ：" + by + "  ：" + bw + " ：" + bh);
                 newbmp = Bitmap.createBitmap(bitmap, (int) ((130 * width / 720)), (int) ((355 * height / 1092)), (int) ((460 * width / 720)),
                         (int) ((460 * height / 1092)), matrix, false);
@@ -146,5 +146,6 @@ public class ImageCut {
         context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.parse("file://" + fileName)));
 
     }
+
 
 }
