@@ -161,7 +161,7 @@ public class AliQRService extends AccessibilityService {
                         generate = false;
                         if (count >= total + 1) {
                             //清除手机相册图片
-//                            deleteAllImg();
+                            deleteAllImg();
                             quit = true;
                             mTask.goGlobalBack(this);
                             this.stopSelf();
@@ -384,6 +384,8 @@ public class AliQRService extends AccessibilityService {
 
     //打开支付宝app
     private void gotoAlipay(QRCodeBean mQRCodeBean) {
+        //初始化相册
+        deleteAllImg();
         //初始化标记集合
         tagMap = new HashMap<>();
         //初始化标记2
@@ -530,27 +532,5 @@ public class AliQRService extends AccessibilityService {
                 - statusBarHeight);
         view.destroyDrawingCache();
         return b;
-    }
-
-//    // 程序入口 截取当前屏幕
-//    public static void shootLoacleView(Activity a, String picpath) {
-//        ScreenShot.savePic(ScreenShot.takeScreenShot(a), picpath);
-//    }
-
-    // 保存到sdcard
-    public static void savePic(Bitmap b, String strFileName) {
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(strFileName);
-            if (null != fos) {
-                b.compress(Bitmap.CompressFormat.PNG, 90, fos);
-                fos.flush();
-                fos.close();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 }
